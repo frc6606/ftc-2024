@@ -5,33 +5,44 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.subsystems.Arm;
+import org.firstinspires.ftc.teamcode.subsystems.Claw;
+import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.subsystems.Drone;
 import org.pinkhawks.ftc.drive.PoseStorage;
 import org.pinkhawks.ftc.drive.SampleMecanumDrive;
+import org.pinkhawks.ftc.subsystems.SubsystemManager;
 
 @TeleOp(name="FieldCentricTeleOp", group="TeleOp")
 public class FieldCentricTeleOp extends LinearOpMode {
+    private final SubsystemManager subsystemManager = new SubsystemManager();
+    private Arm arm = null;
+    private Claw claw = null;
+    private Drone drone = null;
 
-    private DcMotor intakeMotor,hangingLeftMotor,hangingRightMotor;
-    private Servo droneServo;
     @Override
     public void runOpMode() throws InterruptedException {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
-
-        intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
-        hangingLeftMotor = hardwareMap.get(DcMotor.class, "hangingLeftMotor");
-        hangingRightMotor = hardwareMap.get(DcMotor.class, "hangingRightMotor");
-        droneServo = hardwareMap.get(Servo.class,"droneServo");
-
-        hangingRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        arm = new Arm(telemetry, hardwareMap);
+        claw = new Claw(hardwareMap);
+        drone = new Drone(hardwareMap);
+        subsystemManager.register(arm);
+        subsystemManager.register(claw);
+        subsystemManager.register(drone);
+
+        subsystemManager.init(telemetry);
         drive.setPoseEstimate(PoseStorage.currentPose);
 
         waitForStart();
+
 
         if (isStopRequested()) return;
 
@@ -51,35 +62,40 @@ public class FieldCentricTeleOp extends LinearOpMode {
                     )
             );
 
-            if (gamepad2.right_bumper){
-                intakeMotor.setPower(1);
-            } else if (gamepad2.left_bumper) {
-                intakeMotor.setPower(-1);
-            } else {
-                intakeMotor.setPower(0);
+            if (gamepad1.dpad_up) {
+                arm.goToBackdrop();
+            } else if (gamepad1.dpad_down) {
+                arm.goToGround();
+            } else if (gamepad1.dpad_right) {
+                arm.hang();
             }
 
-            if (gamepad2.y){
-                droneServo.setPosition(0);
-            }else {
-                droneServo.setPosition(0.6);
+            if (gamepad1.y) {
+                claw.groundPos();
+            } else if (gamepad1.x) {
+                claw.backdropPos();
+            } else
+                claw.restPosition();
+
+            if (gamepad1.right_bumper) {
+                claw.takePixel();
+            } else if (gamepad1.left_bumper) {
+                claw.dropPixel();
             }
 
-            if (gamepad2.dpad_up){
-                hangingLeftMotor.setPower(1);
-                hangingRightMotor.setPower(1);
-            } else if (gamepad2.dpad_down) {
-                hangingLeftMotor.setPower(-1);
-                hangingRightMotor.setPower(-1);
+            if (gamepad1.b) {
+                drone.launchDrone();
             } else {
-                hangingLeftMotor.setPower(0);
-                hangingRightMotor.setPower(0);
+                drone.restDronePos();
             }
+
+
             drive.update();
 
             telemetry.addData("x", poseEstimate.getX());
             telemetry.addData("y", poseEstimate.getY());
             telemetry.addData("heading", poseEstimate.getHeading());
+
             telemetry.update();
         }
     }

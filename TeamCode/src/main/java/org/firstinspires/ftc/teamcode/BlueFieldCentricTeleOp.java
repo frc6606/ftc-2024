@@ -8,28 +8,36 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.subsystems.Arm;
+import org.firstinspires.ftc.teamcode.subsystems.Claw;
+import org.firstinspires.ftc.teamcode.subsystems.Drone;
 import org.pinkhawks.ftc.drive.PoseStorage;
 import org.pinkhawks.ftc.drive.SampleMecanumDrive;
+import org.pinkhawks.ftc.subsystems.SubsystemManager;
 
 @TeleOp(name="BLUEFieldCentricTeleOp", group="TeleOp")
 public class BlueFieldCentricTeleOp extends LinearOpMode {
 
-    private DcMotor intakeMotor, hangingLeftMotor, hangingRightMotor;
-    private Servo droneServo;
+    private final SubsystemManager subsystemManager = new SubsystemManager();
+    private Arm arm = null;
+    private Claw claw = null;
+    private Drone drone = null;
 
     @Override
     public void runOpMode() throws InterruptedException {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
-
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        arm = new Arm(telemetry, hardwareMap);
+        claw = new Claw(hardwareMap);
+        drone = new Drone(hardwareMap);
+        subsystemManager.register(arm);
+        subsystemManager.register(claw);
+        subsystemManager.register(drone);
+
+        subsystemManager.init(telemetry);
         drive.setPoseEstimate(PoseStorage.currentPose);
 
-        intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
-        hangingLeftMotor = hardwareMap.get(DcMotor.class, "hangingLeftMotor");
-        hangingRightMotor = hardwareMap.get(DcMotor.class, "hangingRightMotor");
-        droneServo = hardwareMap.get(Servo.class,"droneServo");
-hangingRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         waitForStart();
 
@@ -51,38 +59,39 @@ hangingRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
                     )
             );
 
+            if (gamepad1.dpad_up) {
+                arm.goToBackdrop();
+            } else if (gamepad1.dpad_down) {
+                arm.goToGround();
+            } else if (gamepad1.dpad_right) {
+                arm.hang();
+            }
 
-            if (gamepad2.right_bumper){
-                intakeMotor.setPower(1);
-            } else if (gamepad2.left_bumper) {
-                intakeMotor.setPower(-1);
+            if (gamepad1.y) {
+                claw.groundPos();
+            } else if (gamepad1.x) {
+                claw.backdropPos();
+            } else
+                claw.restPosition();
+
+            if (gamepad1.right_bumper) {
+                claw.takePixel();
+            } else if (gamepad1.left_bumper) {
+                claw.dropPixel();
+            }
+
+            if (gamepad1.b) {
+                drone.launchDrone();
             } else {
-                intakeMotor.setPower(0);
+                drone.restDronePos();
             }
 
-            if (gamepad2.y){
-                droneServo.setPosition(0);
-            }else {
-                droneServo.setPosition(0.6);
-            }
 
-            if (gamepad2.dpad_up){
-                hangingLeftMotor.setPower(1);
-                hangingRightMotor.setPower(1);
-            } else if (gamepad2.dpad_down) {
-                hangingLeftMotor.setPower(-1);
-                hangingRightMotor.setPower(-1);
-            } else {
-                hangingLeftMotor.setPower(0);
-                hangingRightMotor.setPower(0);
-            }
             drive.update();
 
             telemetry.addData("x", poseEstimate.getX());
             telemetry.addData("y", poseEstimate.getY());
             telemetry.addData("heading", poseEstimate.getHeading());
-            telemetry.addData("position",hangingLeftMotor.getCurrentPosition());
-            telemetry.addData("position",hangingRightMotor.getCurrentPosition());
             telemetry.update();
         }
     }
