@@ -22,7 +22,7 @@ public class ArmTest extends OpMode {
     public static double p = 0.02, i = 0, d = 0.0008;
     public static double f = 0.1;
     private final double ticks_in_degree = 103.6 / 180.0;
-    public static int target = 400;
+    public static int target = 0;
     private DcMotorEx armMotor;
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
