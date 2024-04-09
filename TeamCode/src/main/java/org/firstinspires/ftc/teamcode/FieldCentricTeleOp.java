@@ -5,16 +5,12 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.subsystems.Arm;
+import org.firstinspires.ftc.teamcode.subsystems.ArmTest;
 import org.firstinspires.ftc.teamcode.subsystems.Claw;
-import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.Drone;
+import org.firstinspires.ftc.teamcode.subsystems.Hanging;
 import org.pinkhawks.ftc.drive.PoseStorage;
 import org.pinkhawks.ftc.drive.SampleMecanumDrive;
 import org.pinkhawks.ftc.subsystems.SubsystemManager;
@@ -22,18 +18,24 @@ import org.pinkhawks.ftc.subsystems.SubsystemManager;
 @TeleOp(name="FieldCentricTeleOp", group="TeleOp")
 public class FieldCentricTeleOp extends LinearOpMode {
     private final SubsystemManager subsystemManager = new SubsystemManager();
+    private Hanging hang = null;
     private Arm arm = null;
     private Claw claw = null;
     private Drone drone = null;
+    private ArmTest armTest;
+    private double leftPos;
+    private double rightPos;
 
     @Override
     public void runOpMode() throws InterruptedException {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        arm = new Arm(telemetry, hardwareMap);
+        hang = new Hanging(telemetry, hardwareMap);
+        arm = new Arm(telemetry, hardwareMap, armTest);
         claw = new Claw(hardwareMap);
         drone = new Drone(hardwareMap);
+        subsystemManager.register(hang);
         subsystemManager.register(arm);
         subsystemManager.register(claw);
         subsystemManager.register(drone);
@@ -62,28 +64,37 @@ public class FieldCentricTeleOp extends LinearOpMode {
                     )
             );
 
-            if (gamepad1.dpad_up) {
-                arm.goToBackdrop();
-            } else if (gamepad1.dpad_down) {
+            if (gamepad2.dpad_up) {
+                arm.goToBackdrop1Line();
+            } else if (gamepad2.dpad_down) {
                 arm.goToGround();
-            } else if (gamepad1.dpad_right) {
+            } else if (gamepad2.dpad_right) {
+                arm.goToBackdrop2Line();
+            } else if (gamepad2.dpad_left) {
                 arm.hang();
             }
 
-            if (gamepad1.y) {
+            if(gamepad1.y){
+                hang.hangRobot();
+            }
+
+            if (gamepad2.y) {
                 claw.groundPos();
-            } else if (gamepad1.x) {
+            } else if (gamepad2.x) {
                 claw.backdropPos();
             } else
                 claw.restPosition();
 
-            if (gamepad1.right_bumper) {
-                claw.takePixel();
-            } else if (gamepad1.left_bumper) {
-                claw.dropPixel();
+            if (gamepad2.right_bumper) {
+                claw.dropRightPixel();
             }
 
-            if (gamepad1.b) {
+            if (gamepad2.left_bumper) {
+                claw.dropLeftPixel();
+            }
+
+
+            if (gamepad2.b) {
                 drone.launchDrone();
             } else {
                 drone.restDronePos();
