@@ -19,33 +19,17 @@ public class Arm implements Subsystem {
     public static double f = 0.1; // 0.2
     private final double ticks_in_degree = 103.6 / 180.0;
     public static int backdrop1LineTarget = 400;
-    public static int getBackdrop2LineTarget = 850;
+    public static int backdrop2LineTarget = 850;
     public static int groundTarget = 100;
     public static int hangingTarget = 700;
     private DcMotorEx armMotor;
     private Telemetry telemetry;
     private HardwareMap hardwareMap;
+    public int target;
 
-    public Arm(Telemetry telemetry, HardwareMap hardwareMap, ArmTest armTest) {
+    public Arm(Telemetry telemetry, HardwareMap hardwareMap) {
         this.telemetry = telemetry;
         this.hardwareMap = hardwareMap;
-    }
-
-    @Override
-    public void loop(int target){
-        controller.setPID(p, i, d);
-        int armPos = armMotor.getCurrentPosition();
-        double pid = controller.calculate(armPos, target);
-        double ff = Math.cos(Math.toRadians(target / ticks_in_degree)) * f;
-
-        double power  = pid + ff;
-
-
-        armMotor.setPower(power * 0.1);
-
-        telemetry.addData("pos", armPos);
-        telemetry.addData("target", target);
-        telemetry.update();
     }
 
     public void goToBackdrop1Line() {
@@ -62,7 +46,7 @@ public class Arm implements Subsystem {
         telemetry.addData("target", backdrop1LineTarget);
         telemetry.update();
          */
-        this.loop(backdrop1LineTarget);
+        target = backdrop1LineTarget;
     }
 
     public void goToBackdrop2Line() {
@@ -80,7 +64,9 @@ public class Arm implements Subsystem {
         telemetry.update();
 
         */
-        this.loop(getBackdrop2LineTarget);
+
+        target = backdrop2LineTarget;
+
     }
 
     public void goToGround() {
@@ -99,7 +85,7 @@ public class Arm implements Subsystem {
 
          */
 
-        this.loop(groundTarget);
+        target = groundTarget;
     }
 
     public void hang() {
@@ -116,7 +102,7 @@ public class Arm implements Subsystem {
         telemetry.update();
 
          */
-        this.loop(hangingTarget);
+        target = hangingTarget;
     }
 
     public DcMotorEx getMotor(){
@@ -143,7 +129,19 @@ public class Arm implements Subsystem {
 
     @Override
     public void update() {
+        controller.setPID(p, i, d);
+        int armPos = armMotor.getCurrentPosition();
+        double pid = controller.calculate(armPos, target);
+        double ff = Math.cos(Math.toRadians(target / ticks_in_degree)) * f;
 
+        double power  = pid + ff;
+
+
+        armMotor.setPower(power * 0.1);
+
+        telemetry.addData("pos", armPos);
+        telemetry.addData("target", target);
+        telemetry.update();
     }
 
     @Override
