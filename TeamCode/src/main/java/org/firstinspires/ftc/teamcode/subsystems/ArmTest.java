@@ -19,25 +19,21 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 @TeleOp
 public class ArmTest extends OpMode {
     private PIDController controller;
-    public static double p = 0.02, i = 0, d = 0.0008;
+    public static double p = 0.02, i = 0, d = 0.00075;
     public static double f = 0.1;
     private final double ticks_in_degree = 103.6 / 180.0;
-    public static int target = 400;
-    private DcMotorEx armMotor;
-    private Telemetry telemetry;
-    private HardwareMap hardwareMap;
+    public static int target = 300;
+    public DcMotorEx armMotor;
 
-    public ArmTest (Telemetry telemetry, HardwareMap hardwareMap){
-        this.telemetry = telemetry;
-        this.hardwareMap = hardwareMap;
-    }
-
+    //public Arm arm = new Arm(telemetry, hardwareMap, this);
 
     @Override
     public void init() {
         controller = new PIDController(p, i, d);
         telemetry =  new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         armMotor = hardwareMap.get(DcMotorEx.class,"armMotor");
+        armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
     }
 
     @Override
